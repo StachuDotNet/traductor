@@ -131,6 +131,9 @@
   }
   .swap-bar:active { background: #444; }
   .swap-icon { font-size: 16px; }
+  @media (max-width: 767px) {
+    .swap-label-top { transform: rotate(180deg); }
+  }
 
   body.swapped .half.spanish { order: 2; transform: none; border-top: 2px solid #444; }
   body.swapped .half.english { order: 1; transform: rotate(180deg); border-top: none; }
@@ -150,9 +153,9 @@
 </div>
 
 <div class="swap-bar" id="swap-btn">
-  <span>cambiar</span>
+  <span class="swap-label-top">cambiar</span>
   <span class="swap-icon">⇄</span>
-  <span>switch</span>
+  <span class="swap-label-bottom">switch</span>
 </div>
 
 <div class="half english" id="english-side">
