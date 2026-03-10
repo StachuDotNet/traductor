@@ -158,39 +158,48 @@ function startListening(sideName) {
   const side = sides[sideName];
   if (side.active) return;
   side.active = true;
+  side.spokenText = '';
 
   side.el.classList.add('listening');
   side.statusEl.className = 'status-dot listening';
   side.textEl.innerHTML = '<span class="hint">Listening...</span>';
 
-  const rec = createRecognizer(side.lang);
-  side.recognizer = rec;
-  let transcript = '';
+  function launch() {
+    const rec = createRecognizer(side.lang);
+    side.recognizer = rec;
 
-  rec.onresult = (e) => {
-    // Show all current speech, but only keep the latest for translation
-    let text = '';
-    for (let i = 0; i < e.results.length; i++) {
-      text += e.results[i][0].transcript;
-    }
-    side.textEl.textContent = text.trim() || 'Listening...';
-  };
+    rec.onresult = (e) => {
+      // Only look at results from THIS session
+      let sessionText = '';
+      for (let i = 0; i < e.results.length; i++) {
+        sessionText += e.results[i][0].transcript;
+      }
+      // Show accumulated from prior restarts + this session
+      const full = (side.spokenText + ' ' + sessionText).trim();
+      side.textEl.textContent = full || 'Listening...';
+    };
 
-  rec.onerror = (e) => {
-    if (e.error !== 'aborted') {
-      console.error('Recognition error:', e.error);
-      side.textEl.textContent = `Error: ${e.error}`;
-    }
-  };
+    rec.onerror = (e) => {
+      if (e.error !== 'aborted') {
+        side.textEl.textContent = `Error: ${e.error}`;
+      }
+    };
 
-  rec.onend = () => {
-    // Chrome stops recognition after silence — restart if still holding
-    if (side.active) {
-      rec.start();
-    }
-  };
+    rec.onend = () => {
+      if (side.active) {
+        // Save what we got from this session before restarting
+        const current = side.textEl.textContent;
+        if (current && current !== 'Listening...' && !current.startsWith('Error')) {
+          side.spokenText = current;
+        }
+        launch();
+      }
+    };
 
-  rec.start();
+    rec.start();
+  }
+
+  launch();
 }
 
 async function stopListening(sideName) {
