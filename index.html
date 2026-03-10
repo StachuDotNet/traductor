@@ -6,6 +6,8 @@
 <title>Traductor</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1a1a2e">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1a1a2e">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#1a1a2e">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -25,14 +27,14 @@
     transition: background-color 0.2s;
   }
 
-  .half.english {
-    background: #1a1a2e;
-    color: #e0e0ff;
-    transform: rotate(180deg);
-  }
   .half.spanish {
     background: #2e1a1a;
     color: #ffe0e0;
+    transform: rotate(180deg);
+  }
+  .half.english {
+    background: #1a1a2e;
+    color: #e0e0ff;
     border-top: 2px solid #444;
   }
 
@@ -89,16 +91,16 @@
 </head>
 <body>
 
-<div class="half english" id="english-side">
-  <div class="status-dot idle" id="en-status"></div>
-  <div class="text-display" id="en-text"><span class="hint">Hold to speak English</span></div>
-  <div class="lang-label">English</div>
-</div>
-
 <div class="half spanish" id="spanish-side">
   <div class="status-dot idle" id="es-status"></div>
   <div class="text-display" id="es-text"><span class="hint">Mantén para hablar Español</span></div>
   <div class="lang-label">Español</div>
+</div>
+
+<div class="half english" id="english-side">
+  <div class="status-dot idle" id="en-status"></div>
+  <div class="text-display" id="en-text"><span class="hint">Hold to speak English</span></div>
+  <div class="lang-label">English</div>
 </div>
 
 <script>
@@ -111,7 +113,7 @@ function createRecognizer(lang) {
   const r = new SpeechRecognition();
   r.lang = lang;
   r.interimResults = true;
-  r.continuous = false;
+  r.continuous = true;
   return r;
 }
 
@@ -166,8 +168,12 @@ function startListening(sideName) {
   let transcript = '';
 
   rec.onresult = (e) => {
-    const last = e.results[e.results.length - 1];
-    side.textEl.textContent = last[0].transcript.trim() || 'Listening...';
+    // Show all current speech, but only keep the latest for translation
+    let text = '';
+    for (let i = 0; i < e.results.length; i++) {
+      text += e.results[i][0].transcript;
+    }
+    side.textEl.textContent = text.trim() || 'Listening...';
   };
 
   rec.onerror = (e) => {
@@ -178,7 +184,10 @@ function startListening(sideName) {
   };
 
   rec.onend = () => {
-    // If still active, recognition ended unexpectedly — don't restart
+    // Chrome stops recognition after silence — restart if still holding
+    if (side.active) {
+      rec.start();
+    }
   };
 
   rec.start();
