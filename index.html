@@ -93,13 +93,13 @@
 
 <div class="half spanish" id="spanish-side">
   <div class="status-dot idle" id="es-status"></div>
-  <div class="text-display" id="es-text"><span class="hint">Mantén para hablar Español</span></div>
+  <div class="text-display" id="es-text"><span class="hint">Mantén para hablar, suelta para traducir</span></div>
   <div class="lang-label">Español</div>
 </div>
 
 <div class="half english" id="english-side">
   <div class="status-dot idle" id="en-status"></div>
-  <div class="text-display" id="en-text"><span class="hint">Hold to speak English</span></div>
+  <div class="text-display" id="en-text"><span class="hint">Hold to talk, release to translate</span></div>
   <div class="lang-label">English</div>
 </div>
 
@@ -216,7 +216,7 @@ async function stopListening(sideName) {
   const spoken = side.textEl.textContent;
   if (!spoken || spoken === 'Listening...' || spoken.startsWith('Error')) {
     side.statusEl.className = 'status-dot idle';
-    side.textEl.innerHTML = `<span class="hint">${sideName === 'english' ? 'Hold to speak English' : 'Mantén para hablar Español'}</span>`;
+    side.textEl.innerHTML = `<span class="hint">${sideName === 'english' ? 'Hold to talk, release to translate' : 'Mantén para hablar, suelta para traducir'}</span>`;
     return;
   }
 
