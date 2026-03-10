@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#1a1a2e"/>
+  <rect y="256" width="512" height="256" rx="0" fill="#2e1a1a"/>
+  <rect x="0" y="248" width="512" height="16" rx="8" fill="#444"/>
+  <text x="256" y="170" text-anchor="middle" font-size="100" font-family="sans-serif" fill="#e0e0ff" transform="rotate(180 256 150)">EN</text>
+  <text x="256" y="390" text-anchor="middle" font-size="100" font-family="sans-serif" fill="#ffe0e0">ES</text>
+  <text x="256" y="270" text-anchor="middle" font-size="48" fill="#888">&#x21C4;</text>
+</svg>

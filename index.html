@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Traductor</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  body { display: flex; flex-direction: column; touch-action: none; -webkit-user-select: none; user-select: none; }
+
+  .half {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .half.english {
+    background: #1a1a2e;
+    color: #e0e0ff;
+    transform: rotate(180deg);
+  }
+  .half.spanish {
+    background: #2e1a1a;
+    color: #ffe0e0;
+    border-top: 2px solid #444;
+  }
+
+  .half.listening {
+    outline: 4px solid #fff;
+    outline-offset: -4px;
+  }
+  .half.english.listening { background: #1a2a3e; }
+  .half.spanish.listening { background: #3e2a1a; }
+
+  .lang-label {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0.5;
+    position: absolute;
+    bottom: 16px;
+  }
+
+  .text-display {
+    font-size: 28px;
+    font-weight: 300;
+    text-align: center;
+    line-height: 1.4;
+    max-height: 80%;
+    overflow-y: auto;
+    padding: 10px;
+    width: 100%;
+  }
+
+  .hint {
+    font-size: 16px;
+    opacity: 0.3;
+    font-style: italic;
+  }
+
+  .status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    position: absolute;
+    top: 16px;
+    right: 16px;
+  }
+  .status-dot.idle { background: transparent; }
+  .status-dot.listening { background: #ff4444; animation: pulse 1s infinite; }
+  .status-dot.translating { background: #ffaa00; animation: pulse 0.5s infinite; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+</style>
+</head>
+<body>
+
+<div class="half english" id="english-side">
+  <div class="status-dot idle" id="en-status"></div>
+  <div class="text-display" id="en-text"><span class="hint">Hold to speak English</span></div>
+  <div class="lang-label">English</div>
+</div>
+
+<div class="half spanish" id="spanish-side">
+  <div class="status-dot idle" id="es-status"></div>
+  <div class="text-display" id="es-text"><span class="hint">Mantén para hablar Español</span></div>
+  <div class="lang-label">Español</div>
+</div>
+
+<script>
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (!SpeechRecognition) {
+  alert('Speech recognition not supported in this browser. Use Chrome on Android or Safari on iOS.');
+}
+
+function createRecognizer(lang) {
+  const r = new SpeechRecognition();
+  r.lang = lang;
+  r.interimResults = true;
+  r.continuous = false;
+  return r;
+}
+
+const sides = {
+  english: {
+    el: document.getElementById('english-side'),
+    textEl: document.getElementById('en-text'),
+    statusEl: document.getElementById('en-status'),
+    lang: 'en-US',
+    targetLang: 'es',
+    targetSide: 'spanish',
+    recognizer: null,
+    active: false,
+  },
+  spanish: {
+    el: document.getElementById('spanish-side'),
+    textEl: document.getElementById('es-text'),
+    statusEl: document.getElementById('es-status'),
+    lang: 'es-ES',
+    targetLang: 'en',
+    targetSide: 'english',
+    recognizer: null,
+    active: false,
+  }
+};
+
+async function translate(text, from, to) {
+  const url = `https://lingva.ml/api/v1/${from}/${to}/${encodeURIComponent(text)}`;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.translation) {
+      return data.translation;
+    }
+    return `[Translation error]`;
+  } catch (e) {
+    return `[Network error]`;
+  }
+}
+
+function startListening(sideName) {
+  const side = sides[sideName];
+  if (side.active) return;
+  side.active = true;
+
+  side.el.classList.add('listening');
+  side.statusEl.className = 'status-dot listening';
+  side.textEl.innerHTML = '<span class="hint">Listening...</span>';
+
+  const rec = createRecognizer(side.lang);
+  side.recognizer = rec;
+  let transcript = '';
+
+  rec.onresult = (e) => {
+    const last = e.results[e.results.length - 1];
+    side.textEl.textContent = last[0].transcript.trim() || 'Listening...';
+  };
+
+  rec.onerror = (e) => {
+    if (e.error !== 'aborted') {
+      console.error('Recognition error:', e.error);
+      side.textEl.textContent = `Error: ${e.error}`;
+    }
+  };
+
+  rec.onend = () => {
+    // If still active, recognition ended unexpectedly — don't restart
+  };
+
+  rec.start();
+}
+
+async function stopListening(sideName) {
+  const side = sides[sideName];
+  if (!side.active) return;
+  side.active = false;
+
+  side.el.classList.remove('listening');
+
+  if (side.recognizer) {
+    side.recognizer.stop();
+  }
+
+  const spoken = side.textEl.textContent;
+  if (!spoken || spoken === 'Listening...' || spoken.startsWith('Error')) {
+    side.statusEl.className = 'status-dot idle';
+    side.textEl.innerHTML = `<span class="hint">${sideName === 'english' ? 'Hold to speak English' : 'Mantén para hablar Español'}</span>`;
+    return;
+  }
+
+  side.statusEl.className = 'status-dot translating';
+  const target = sides[side.targetSide];
+
+  const fromCode = sideName === 'english' ? 'en' : 'es';
+  const toCode = side.targetLang;
+
+  const translated = await translate(spoken, fromCode, toCode);
+
+  target.textEl.textContent = translated;
+  side.statusEl.className = 'status-dot idle';
+}
+
+// Touch / pointer events
+Object.keys(sides).forEach(sideName => {
+  const el = sides[sideName].el;
+
+  let holdTimer = null;
+  let isHolding = false;
+
+  function onDown(e) {
+    e.preventDefault();
+    holdTimer = setTimeout(() => {
+      isHolding = true;
+      startListening(sideName);
+    }, 200); // slight delay to avoid accidental taps
+  }
+
+  function onUp(e) {
+    e.preventDefault();
+    clearTimeout(holdTimer);
+    if (isHolding) {
+      isHolding = false;
+      stopListening(sideName);
+    }
+  }
+
+  el.addEventListener('touchstart', onDown, { passive: false });
+  el.addEventListener('touchend', onUp, { passive: false });
+  el.addEventListener('touchcancel', onUp, { passive: false });
+
+  // Mouse fallback for desktop testing
+  el.addEventListener('mousedown', onDown);
+  el.addEventListener('mouseup', onUp);
+  el.addEventListener('mouseleave', onUp);
+});
+
+// Register service worker for PWA
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+</body>
+</html>
