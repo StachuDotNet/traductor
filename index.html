@@ -125,7 +125,7 @@ function createRecognizer(lang) {
   const r = new SpeechRecognition();
   r.lang = lang;
   r.interimResults = true;
-  r.continuous = true;
+  r.continuous = false;
   return r;
 }
 
@@ -170,48 +170,30 @@ function startListening(sideName) {
   const side = sides[sideName];
   if (side.active) return;
   side.active = true;
-  side.spokenText = '';
 
   side.el.classList.add('listening');
   side.statusEl.className = 'status-dot listening';
   side.textEl.innerHTML = '<span class="hint">Listening...</span>';
 
-  function launch() {
-    const rec = createRecognizer(side.lang);
-    side.recognizer = rec;
+  const rec = createRecognizer(side.lang);
+  side.recognizer = rec;
 
-    rec.onresult = (e) => {
-      // Only look at results from THIS session
-      let sessionText = '';
-      for (let i = 0; i < e.results.length; i++) {
-        sessionText += e.results[i][0].transcript;
-      }
-      // Show accumulated from prior restarts + this session
-      const full = (side.spokenText + ' ' + sessionText).trim();
-      side.textEl.textContent = full || 'Listening...';
-    };
+  rec.onresult = (e) => {
+    const result = e.results[0];
+    side.textEl.textContent = result[0].transcript.trim() || 'Listening...';
+  };
 
-    rec.onerror = (e) => {
-      if (e.error !== 'aborted') {
-        side.textEl.textContent = `Error: ${e.error}`;
-      }
-    };
+  rec.onerror = (e) => {
+    if (e.error !== 'aborted') {
+      side.textEl.textContent = `Error: ${e.error}`;
+    }
+  };
 
-    rec.onend = () => {
-      if (side.active) {
-        // Save what we got from this session before restarting
-        const current = side.textEl.textContent;
-        if (current && current !== 'Listening...' && !current.startsWith('Error')) {
-          side.spokenText = current;
-        }
-        launch();
-      }
-    };
+  rec.onend = () => {
+    // Do nothing — stopListening handles everything
+  };
 
-    rec.start();
-  }
-
-  launch();
+  rec.start();
 }
 
 async function stopListening(sideName) {
