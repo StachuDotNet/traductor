@@ -137,6 +137,10 @@
 
   body.swapped .half.spanish { order: 2; transform: none; border-top: 2px solid #444; }
   body.swapped .half.english { order: 1; transform: rotate(180deg); border-top: none; }
+  @media (max-width: 767px) {
+    body.swapped .swap-label-top { transform: none; }
+    body.swapped .swap-label-bottom { transform: rotate(180deg); }
+  }
 
   @media (min-width: 768px) {
     body.swapped .half.spanish { transform: none; border-top: none; }
@@ -313,6 +317,10 @@ Object.keys(sides).forEach(sideName => {
 // Swap sides
 function applySwap(swapped) {
   document.body.classList.toggle('swapped', swapped);
+  const topLabel = document.querySelector('.swap-label-top');
+  const bottomLabel = document.querySelector('.swap-label-bottom');
+  topLabel.textContent = swapped ? 'switch' : 'cambiar';
+  bottomLabel.textContent = swapped ? 'cambiar' : 'switch';
 }
 if (localStorage.getItem('swapped') === 'true') applySwap(true);
 
