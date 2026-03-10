@@ -66,6 +66,14 @@
     bottom: 16px;
   }
 
+  .version {
+    font-size: 10px;
+    opacity: 0.3;
+    position: absolute;
+    bottom: 4px;
+    right: 8px;
+  }
+
   .text-display {
     font-size: 28px;
     font-weight: 300;
@@ -113,6 +121,7 @@
   <div class="status-dot idle" id="en-status"></div>
   <div class="text-display" id="en-text"><span class="hint">Hold to talk, release to translate</span></div>
   <div class="lang-label">English</div>
+  <div class="version" id="version"></div>
 </div>
 
 <script>
@@ -263,6 +272,15 @@ Object.keys(sides).forEach(sideName => {
 // Register service worker for PWA
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');
+  navigator.serviceWorker.addEventListener('message', e => {
+    if (e.data.version) {
+      document.getElementById('version').textContent = e.data.version;
+    }
+  });
+  // Ask active SW for version on load
+  navigator.serviceWorker.ready.then(reg => {
+    reg.active.postMessage({ getVersion: true });
+  });
 }
 </script>
 </body>

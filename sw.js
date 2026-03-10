@@ -1,4 +1,4 @@
-const CACHE = 'traductor-v4';
+const CACHE = 'traductor-v5';
 
 self.addEventListener('install', e => {
   self.skipWaiting();
@@ -11,6 +11,16 @@ self.addEventListener('activate', e => {
     )
   );
   self.clients.claim();
+  // Broadcast version to all open pages
+  self.clients.matchAll().then(clients =>
+    clients.forEach(c => c.postMessage({ version: CACHE }))
+  );
+});
+
+self.addEventListener('message', e => {
+  if (e.data.getVersion) {
+    e.source.postMessage({ version: CACHE });
+  }
 });
 
 self.addEventListener('fetch', e => {
