@@ -1,4 +1,4 @@
-const CACHE = 'traductor-v10';
+const CACHE = 'traductor-v11';
 
 self.addEventListener('install', e => {
   self.skipWaiting();

@@ -225,6 +225,7 @@ function startListening(sideName) {
   if (side.active) return;
   side.active = true;
 
+  if (navigator.vibrate) navigator.vibrate(50);
   side.el.classList.add('listening');
   side.statusEl.className = 'status-dot listening';
   side.textEl.innerHTML = '<span class="hint">Listening...</span>';
@@ -255,6 +256,7 @@ async function stopListening(sideName) {
   if (!side.active) return;
   side.active = false;
 
+  if (navigator.vibrate) navigator.vibrate([30, 30, 30]);
   side.el.classList.remove('listening');
 
   if (side.recognizer) {
