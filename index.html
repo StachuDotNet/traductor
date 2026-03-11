@@ -186,7 +186,7 @@ function createRecognizer(lang) {
   const r = new SpeechRecognition();
   r.lang = lang;
   r.interimResults = true;
-  r.continuous = false;
+  r.continuous = true;
   return r;
 }
 
@@ -237,38 +237,32 @@ function startListening(sideName) {
   side.statusEl.className = 'status-dot listening';
   side.textEl.innerHTML = '<span class="hint">Listening...</span>';
 
-  let saved = '';
+  const rec = createRecognizer(side.lang);
+  side.recognizer = rec;
 
-  function launch() {
-    const rec = createRecognizer(side.lang);
-    side.recognizer = rec;
-
-    rec.onresult = (e) => {
-      // continuous=false means only e.results[0] exists
-      side.textEl.textContent = (saved + e.results[0][0].transcript).trim() || 'Listening...';
-    };
-
-    rec.onerror = (e) => {
-      if (e.error !== 'aborted') {
-        side.textEl.textContent = `Error: ${e.error}`;
+  rec.onresult = (e) => {
+    // Collect all finalized transcripts
+    let final = '';
+    for (let i = 0; i < e.results.length; i++) {
+      if (e.results[i].isFinal) {
+        final += e.results[i][0].transcript + ' ';
       }
-    };
+    }
+    // Only append the LAST result if it's still interim
+    const last = e.results[e.results.length - 1];
+    const interim = last.isFinal ? '' : last[0].transcript;
+    side.textEl.textContent = (final + interim).trim() || 'Listening...';
+  };
 
-    rec.onend = () => {
-      if (side.active) {
-        // Save finalized text, restart for more input
-        const current = side.textEl.textContent;
-        if (current && current !== 'Listening...' && !current.startsWith('Error')) {
-          saved = current + ' ';
-        }
-        launch();
-      }
-    };
+  rec.onerror = (e) => {
+    if (e.error !== 'aborted') {
+      side.textEl.textContent = `Error: ${e.error}`;
+    }
+  };
 
-    rec.start();
-  }
+  rec.onend = () => {};
 
-  launch();
+  rec.start();
 }
 
 async function stopListening(sideName) {
