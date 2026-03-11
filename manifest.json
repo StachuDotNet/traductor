@@ -2,7 +2,7 @@
   "name": "Traductor",
   "short_name": "Traductor",
   "start_url": ".",
-  "display": "standalone",
+  "display": "fullscreen",
   "orientation": "portrait",
   "background_color": "#1a1a2e",
   "theme_color": "#1a1a2e",
