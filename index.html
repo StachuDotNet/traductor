@@ -241,9 +241,11 @@ function startListening(sideName) {
   side.recognizer = rec;
 
   rec.onresult = (e) => {
-    // Only show the latest utterance, not accumulated results
-    const last = e.results[e.results.length - 1];
-    side.textEl.textContent = last[0].transcript.trim() || 'Listening...';
+    let text = '';
+    for (let i = 0; i < e.results.length; i++) {
+      text += e.results[i][0].transcript + ' ';
+    }
+    side.textEl.textContent = text.trim() || 'Listening...';
   };
 
   rec.onerror = (e) => {
