@@ -242,19 +242,16 @@ function startListening(sideName) {
   let finalText = '';
 
   rec.onresult = (e) => {
-    // Rebuild final text from all finalized results
     let f = '';
+    let interim = '';
     for (let i = 0; i < e.results.length; i++) {
       if (e.results[i].isFinal) {
         f += e.results[i][0].transcript + ' ';
+      } else {
+        interim += e.results[i][0].transcript + ' ';
       }
     }
-    // Only update finalText if we have new finals (never lose old ones)
     if (f) finalText = f;
-
-    // Append the last result's text if it's still interim
-    const last = e.results[e.results.length - 1];
-    const interim = last.isFinal ? '' : last[0].transcript;
     side.textEl.textContent = (finalText + interim).trim() || 'Listening...';
   };
 
