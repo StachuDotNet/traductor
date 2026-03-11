@@ -241,12 +241,9 @@ function startListening(sideName) {
   side.recognizer = rec;
 
   rec.onresult = (e) => {
-    // Concatenate all results from this session
-    let text = '';
-    for (let i = 0; i < e.results.length; i++) {
-      text += e.results[i][0].transcript;
-    }
-    side.textEl.textContent = text.trim() || 'Listening...';
+    // Only show the latest utterance, not accumulated results
+    const last = e.results[e.results.length - 1];
+    side.textEl.textContent = last[0].transcript.trim() || 'Listening...';
   };
 
   rec.onerror = (e) => {
@@ -255,18 +252,7 @@ function startListening(sideName) {
     }
   };
 
-  rec.onend = () => {
-    // Chrome kills recognition after silence — restart if still holding
-    if (side.active) {
-      const rec2 = createRecognizer(side.lang);
-      side.recognizer = rec2;
-      rec2.onresult = rec.onresult;
-      rec2.onerror = rec.onerror;
-      rec2.onend = rec.onend;
-      // Don't carry over old text — new session starts fresh display
-      rec2.start();
-    }
-  };
+  rec.onend = () => {};
 
   rec.start();
 }
