@@ -185,7 +185,7 @@ if (!SpeechRecognition) {
 function createRecognizer(lang) {
   const r = new SpeechRecognition();
   r.lang = lang;
-  r.interimResults = true;
+  r.interimResults = false;
   r.continuous = true;
   return r;
 }
