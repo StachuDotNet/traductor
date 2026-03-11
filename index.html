@@ -239,19 +239,23 @@ function startListening(sideName) {
 
   const rec = createRecognizer(side.lang);
   side.recognizer = rec;
+  let finalText = '';
 
   rec.onresult = (e) => {
-    // Collect all finalized transcripts
-    let final = '';
+    // Rebuild final text from all finalized results
+    let f = '';
     for (let i = 0; i < e.results.length; i++) {
       if (e.results[i].isFinal) {
-        final += e.results[i][0].transcript + ' ';
+        f += e.results[i][0].transcript + ' ';
       }
     }
-    // Only append the LAST result if it's still interim
+    // Only update finalText if we have new finals (never lose old ones)
+    if (f) finalText = f;
+
+    // Append the last result's text if it's still interim
     const last = e.results[e.results.length - 1];
     const interim = last.isFinal ? '' : last[0].transcript;
-    side.textEl.textContent = (final + interim).trim() || 'Listening...';
+    side.textEl.textContent = (finalText + interim).trim() || 'Listening...';
   };
 
   rec.onerror = (e) => {
